@@ -4,38 +4,36 @@
 Chatbot-Dashboard/
 ├── backend/
 │   ├── app/
-│   │   ├── __init__.py
-│   │   ├── main.py              # FastAPI entry point
 │   │   ├── api/                 # Route handlers
 │   │   │   └── v1/
 │   │   │       └── endpoints.py
 │   │   ├── core/
-│   │   │   ├── config.py        # Env vars (DB_URL, LLM_KEY)
-│   │   │   └── security.py      # Token auth (optional for MVP)
+│   │   │   └── db.py            # Database connection logic
+│   │   ├── schemas/             # Pydantic models
 │   │   ├── services/
-│   │   │   ├── llm_engine.py    # NL -> SQL + VizSpec logic
-│   │   │   ├── query_exec.py    # Safe SQL execution (SQLAlchemy)
-│   │   │   └── viz_engine.py    # Matplotlib/Seaborn rendering
-│   │   └── schemas/             # Pydantic models
-│   │       └── query.py
+│   │   │   └── query_exec.py    # SQL execution logic
+│   │   ├── __init__.py
+│   │   └── main.py              # FastAPI entry point
 │   ├── static/                  # Local storage for generated charts
-│   ├── requirements.txt
-│   └── Dockerfile
+│   ├── Dockerfile
+│   └── requirements.txt
 ├── frontend/
 │   ├── public/
 │   │   └── chat-widget-loader.js # Embed script for 3rd party sites
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── FloatingButton.vue
+│   │   │   ├── ChartDisplay.vue
 │   │   │   ├── ChatWindow.vue
-│   │   │   └── ChartDisplay.vue
+│   │   │   └── FloatingButton.vue
 │   │   ├── services/
 │   │   │   └── api.js
-│   │   └── App.vue
+│   │   ├── App.vue
+│   │   └── main.js
+│   ├── index.html
 │   ├── package.json
+│   ├── vite.config.js
 │   └── Dockerfile
-├── data/                        # Init scripts for DB
-│   └── init.sql
+├── data/                        # Database initialization/data
 ├── n8n/                         # Workflow automation
 │   └── workflows/
 ├── .env.example
