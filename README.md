@@ -1,146 +1,110 @@
-## Features
+# Chatbot Dashboard
 
-- **Natural Language Processing**: Convert user questions into SQL queries.
-- **Dynamic Visualization**: Automatically generates Bar, Line, or Pie charts based on data.
-- **Interactive Chat Interface**: A clean Vue.js based chat widget.
-- **RESTful API**: FastAPI backend for robust data handling.
+## Overview
+This project is a sophisticated **Chatbot Dashboard** that allows users to query their database using natural language. It leverages a **FastAPI** backend to handle requests, integrates with **Google Gemini (LLM)** to translate questions into SQL queries, and uses **Vue.js** for an interactive frontend. The system can execute these queries against a **MySQL** database and generate dynamic visualizations (charts) using **Matplotlib/Seaborn**, which are then displayed to the user.
+
+## System Architecture
+
+The following diagram illustrates the data flow within the application:
+
+```mermaid
+graph TD
+    User[User] -->|1. Asks Question| Frontend[Frontend (Vue.js)]
+    Frontend -->|2. POST /analyze| Backend[Backend (FastAPI)]
+    
+    subgraph "Backend Processing"
+    Backend -->|3. Schema & Prompt| LLM[LLM Engine (Gemini)]
+    LLM -->|4. SQL & Viz Spec| Backend
+    end
+    
+    Backend -->|5. Preview JSON| Frontend
+    User -->|6. Confirms Execution| Frontend
+    Frontend -->|7. POST /execute| Backend
+    
+    subgraph "Data & Visualization"
+    Backend -->|8. Execute SQL| DB[(MySQL Database)]
+    DB -->|9. Raw Data| Backend
+    Backend -->|10. Dataframe| Viz[Viz Engine (Matplotlib)]
+    Viz -->|11. Chart Image| FS[File System (/static)]
+    end
+    
+    Backend -->|12. Chart URL| Frontend
+    Frontend -->|13. Display Chart| User
+```
+
+## Server-Side Breakdown
+
+To better understand the deployment logic, the files are categorized by which "Server" or logical node they belong to:
+
+### 1. Frontend Server (UI & Client Layer)
+*Served via Nginx / Apache / Vite*
+- **`frontend/src/App.vue`**: The main application shell managing global state (chat visibility, API URL).
+- **`frontend/src/components/ChatWindow.vue`**: Handles the chat UI logic, message rendering, and user input.
+- **`frontend/src/components/FloatingButton.vue`**: A lightweight visual component for toggling the dashboard.
+- **`src/services/api.js`**: The communication bridge; handles all Axios HTTP requests to the Backend Server.
+- **`src/main.js`**: The client-side entry point that hydrates the Vue application.
+
+### 2. Backend Server (API & Orchestration)
+*Running on FastAPI (Python/Uvicorn)*
+- **`backend/app/main.py`**: The central application hub; initializes the API, CORS settings, and static file serving.
+- **`app/api/v1/endpoints.py`**: The traffic controller; receives frontend requests (`/analyze`, `/execute`) and routes them to specific services.
+- **`app/core/db.py`**: The database persistence layer; manages connection pooling to the MySQL database.
+- **`app/schemas/query.py`**: The data contract layer; defines strict Pydantic models to validate incoming JSON and outgoing responses.
+- **`app/services/query_exec.py`**: The execution engine; runs the actual SQL queries against the database and formats results.
+- **`app/services/viz_engine.py`**: The rendering engine; processes dataframes to generate static chart images (CPU-intensive).
+
+### 3. Modeling Server (AI & High-Compute)
+*Logic often delegated to GPU instances or External APIs (Google Gemini)*
+- **`backend/app/services/llm_engine.py`**: **The Brain**. This module interacts with high-performance LLMs (Gemini Pro/Flash). It encapsulates the complex prompt engineering and schema context injection required to translate English into accurate SQL. In a scaled architecture, this would potentially run as a separate microservice on a GPU-optimized server.
+
+## Features
+- **Natural Language to SQL**: Converts English questions into complex SQL queries automatically.
+- **Dynamic Visualization**: Autonomously determines the best chart type (Bar, Line, Scatter, Heatmap) for the data.
+- **Review & Execute**: distinct two-phase process (Analyze -> Execute) allowing users to verify the SQL before running it.
+- **Interactive UI**: A clean, modern chat interface built with Vue 3.
 
 ## Tech Stack
-
-### Backend
-- **Framework**: FastAPI
-- **Language**: Python 3.x
-- **Database Helper**: SQLAlchemy, PyMySQL
-- **Data Analysis**: Pandas
-- **Visualization Logic**: Matplotlib, Seaborn
-
-### Frontend
-- **Framework**: Vue.js 3
-- **Build Tool**: Vite
-- **HTTP Client**: Axios
-
-### Database
-- **System**: MySQL (via XAMPP)
-
-## Project Structure
-
-```
-Chatbot-Dashboard/
-├── backend/
-│   ├── app/
-│   │   ├── api/                 # Route handlers
-│   │   │   └── v1/
-│   │   │       └── endpoints.py
-│   │   ├── core/
-│   │   │   └── db.py            # Database connection logic
-│   │   ├── schemas/             # Pydantic models
-│   │   ├── services/
-│   │   │   └── query_exec.py    # SQL execution logic
-│   │   ├── __init__.py
-│   │   └── main.py              # FastAPI entry point
-│   ├── static/                  # Local storage for generated charts
-│   ├── Dockerfile
-│   └── requirements.txt
-├── frontend/
-│   ├── public/
-│   │   └── chat-widget-loader.js # Embed script for 3rd party sites
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── ChartDisplay.vue
-│   │   │   ├── ChatWindow.vue
-│   │   │   └── FloatingButton.vue
-│   │   ├── services/
-│   │   │   └── api.js
-│   │   ├── App.vue
-│   │   └── main.js
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.js
-│   └── Dockerfile
-├── data/                        # Database initialization/data
-├── n8n/                         # Workflow automation
-│   └── workflows/
-├── .env.example
-└── docker-compose.yml
-```
+- **Backend**: FastAPI, Python 3.9+, SQLAlchemy, Pandas, Matplotlib, Seaborn.
+- **Frontend**: Vue 3, Vite, Axios.
+- **AI/LLM**: Google Gemini (via `google-generativeai` SDK).
+- **Database**: MySQL.
 
 ## Setup & Installation
 
 ### Prerequisites
-- Python 3.9+ installed
-- Node.js & npm installed
-- XAMPP installed (for MySQL database)
+- Python 3.9+
+- Node.js & npm
+- MySQL (XAMPP recommended)
 
 ### 1. Database Setup
-1. Start **XAMPP** and ensure the **MySQL** and **Apache** module is running.
-2. Create a database named `analytics_db` (or update `DATABASE_URL` in `backend/app/core/db.py`).
-3. Ensure your MySQL user is `root` with no password, or update the connection settings accordingly.
+1. Start MySQL.
+2. Create a database named `analytics_db`.
+3. Ensure `sales_data` or relevant tables exist.
+4. Update `DATABASE_URL` in `backend/app/core/db.py` if your credentials differ from `root` (no password).
 
-### 2. Backend Setup
-Navigate to the backend directory:
+### 2. Backend
 ```bash
 cd backend
-```
-
-Install dependencies:
-```bash
 pip install -r requirements.txt
+uvicorn app.main:app --reload
 ```
+*Server runs at `http://localhost:8000`*
 
-### 3. Frontend Setup
-Navigate to the frontend directory:
+### 3. Frontend
 ```bash
 cd frontend
-```
-
-Install dependencies:
-```bash
 npm install
-```
-
-## Running the Application
-
-### 1. Start the Backend Server
-From the `backend` directory:
-```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-The API will be available at `http://localhost:8000`.
-
-### 2. Start the Frontend Client
-From the `frontend` directory:
-```bash
 npm run dev
 ```
-The application will typically run at `http://localhost:5173`.
+*Client runs at `http://localhost:5173`*
 
 ## API Usage
 
-### Endpoint: `/api/v1/analyze`
+**POST** `/api/v1/analyze`
+- **Input**: `{"prompt": "Show sales by category", "context_tables": ["sales_data"]}`
+- **Output**: JSON with `job_id`, `generated_sql`, and `viz_spec`.
 
-**Method**: `POST`
+**POST** `/api/v1/execute`
+- **Input**: `{"job_id": "..."}`
+- **Output**: JSON with `chart_url` pointing to the generated image.
 
-**Request**:
-```json
-{
-  "prompt": "Show me total sales by category",
-  "context_tables": ["sales"]
-}
-```
-
-**Response**:
-```json
-{
-  "job_id": "e4369be5-2c64-48a3-9f2c-df5e90c6ab64",
-  "generated_sql": "SELECT category, SUM(amount) AS total_sales FROM sales GROUP BY category...",
-  "viz_spec": { 
-      "type": "bar",
-      "x": "category",
-      "y": "total_sales",
-      "title": "Total Sales by Category"
-  },
-  "preview_rows": [
-      { "category": "Electronics", "total_sales": "650.00" }
-  ]
-}
-```
