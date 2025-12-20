@@ -7,39 +7,7 @@ It features a **FastAPI** backend for robust orchestration, **Google Gemini (LLM
 
 ---
 
-## 2. System Architecture (Mermaid Diagram)
-
-The following diagram represents the core logic flow from user input to visual output.
-
-```mermaid
-graph TD
-    User[User] -->|1. Asks Question| Frontend[Frontend Server (Vue.js)]
-    Frontend -->|2. POST /analyze| Backend[Backend Server (FastAPI)]
-    
-    subgraph "Backend Orchestration"
-    Backend -->|3. Get Schema Context| DB[(MySQL Database)]
-    Backend -->|4. Send Prompt + Schema| Model[Modeling Server (Gemini)]
-    Model -->|5. Return SQL + Viz Spec| Backend
-    end
-    
-    Backend -->|6. JSON Preview| Frontend
-    User -->|7. Confirms Action| Frontend
-    Frontend -->|8. POST /execute| Backend
-    
-    subgraph "Execution & Rendering"
-    Backend -->|9. Run SQL| DB
-    DB -->|10. Raw Data| Backend
-    Backend -->|11. Render Image| Viz[Viz Engine]
-    Viz -->|12. Save Chart (.png)| Static[Static Files]
-    end
-    
-    Backend -->|13. Return Chart URL| Frontend
-    Frontend -->|14. Render Chart| User
-```
-
----
-
-## 3. Server-Side File Breakdown & Logic
+## 2. Server-Side File Breakdown & Logic
 
 The codebase is architecturally divided into three logical servers/layers. Here is the one-liner logic for each critical file:
 
@@ -76,7 +44,7 @@ The codebase is architecturally divided into three logical servers/layers. Here 
 
 ---
 
-## 4. Project File Structure
+## 3. Project File Structure
 
 ```text
 Chatbot-Dashboard/
@@ -107,7 +75,7 @@ Chatbot-Dashboard/
 
 ---
 
-## 5. Setup & Installation
+## 4. Setup & Installation
 
 ### Prerequisites
 *   **Python 3.9+**
@@ -147,7 +115,7 @@ npm run dev
 
 ---
 
-## 6. API Integration & Requests
+## 5. API Integration & Requests
 
 The system uses a **2-Phase Execution Model** to ensure accuracy.
 
