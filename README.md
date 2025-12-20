@@ -1,110 +1,184 @@
 # Chatbot Dashboard
 
-## Overview
-This project is a sophisticated **Chatbot Dashboard** that allows users to query their database using natural language. It leverages a **FastAPI** backend to handle requests, integrates with **Google Gemini (LLM)** to translate questions into SQL queries, and uses **Vue.js** for an interactive frontend. The system can execute these queries against a **MySQL** database and generate dynamic visualizations (charts) using **Matplotlib/Seaborn**, which are then displayed to the user.
+## 1. Overview
+This project is an advanced **AI-Powered Analytics Dashboard** that bridges the gap between natural language and database insights. Users can ask questions in plain English (e.g., "Show me total sales by category"), and the system autonomously translates these into SQL, executes them against a business database, and renders professional-grade visualizations (Charts) in real-time.
 
-## System Architecture
+It features a **FastAPI** backend for robust orchestration, **Google Gemini (LLM)** for intelligent query generation, and a reactive **Vue.js** frontend for a seamless user experience.
 
-The following diagram illustrates the data flow within the application:
+---
+
+## 2. System Architecture (Mermaid Diagram)
+
+The following diagram represents the core logic flow from user input to visual output.
 
 ```mermaid
 graph TD
-    User[User] -->|1. Asks Question| Frontend[Frontend (Vue.js)]
-    Frontend -->|2. POST /analyze| Backend[Backend (FastAPI)]
+    User[User] -->|1. Asks Question| Frontend[Frontend Server (Vue.js)]
+    Frontend -->|2. POST /analyze| Backend[Backend Server (FastAPI)]
     
-    subgraph "Backend Processing"
-    Backend -->|3. Schema & Prompt| LLM[LLM Engine (Gemini)]
-    LLM -->|4. SQL & Viz Spec| Backend
+    subgraph "Backend Orchestration"
+    Backend -->|3. Get Schema Context| DB[(MySQL Database)]
+    Backend -->|4. Send Prompt + Schema| Model[Modeling Server (Gemini)]
+    Model -->|5. Return SQL + Viz Spec| Backend
     end
     
-    Backend -->|5. Preview JSON| Frontend
-    User -->|6. Confirms Execution| Frontend
-    Frontend -->|7. POST /execute| Backend
+    Backend -->|6. JSON Preview| Frontend
+    User -->|7. Confirms Action| Frontend
+    Frontend -->|8. POST /execute| Backend
     
-    subgraph "Data & Visualization"
-    Backend -->|8. Execute SQL| DB[(MySQL Database)]
-    DB -->|9. Raw Data| Backend
-    Backend -->|10. Dataframe| Viz[Viz Engine (Matplotlib)]
-    Viz -->|11. Chart Image| FS[File System (/static)]
+    subgraph "Execution & Rendering"
+    Backend -->|9. Run SQL| DB
+    DB -->|10. Raw Data| Backend
+    Backend -->|11. Render Image| Viz[Viz Engine]
+    Viz -->|12. Save Chart (.png)| Static[Static Files]
     end
     
-    Backend -->|12. Chart URL| Frontend
-    Frontend -->|13. Display Chart| User
+    Backend -->|13. Return Chart URL| Frontend
+    Frontend -->|14. Render Chart| User
 ```
 
-## Server-Side Breakdown
+---
 
-To better understand the deployment logic, the files are categorized by which "Server" or logical node they belong to:
+## 3. Server-Side File Breakdown & Logic
 
-### 1. Frontend Server (UI & Client Layer)
-*Served via Nginx / Apache / Vite*
-- **`frontend/src/App.vue`**: The main application shell managing global state (chat visibility, API URL).
-- **`frontend/src/components/ChatWindow.vue`**: Handles the chat UI logic, message rendering, and user input.
-- **`frontend/src/components/FloatingButton.vue`**: A lightweight visual component for toggling the dashboard.
-- **`src/services/api.js`**: The communication bridge; handles all Axios HTTP requests to the Backend Server.
-- **`src/main.js`**: The client-side entry point that hydrates the Vue application.
+The codebase is architecturally divided into three logical servers/layers. Here is the one-liner logic for each critical file:
 
-### 2. Backend Server (API & Orchestration)
-*Running on FastAPI (Python/Uvicorn)*
-- **`backend/app/main.py`**: The central application hub; initializes the API, CORS settings, and static file serving.
-- **`app/api/v1/endpoints.py`**: The traffic controller; receives frontend requests (`/analyze`, `/execute`) and routes them to specific services.
-- **`app/core/db.py`**: The database persistence layer; manages connection pooling to the MySQL database.
-- **`app/schemas/query.py`**: The data contract layer; defines strict Pydantic models to validate incoming JSON and outgoing responses.
-- **`app/services/query_exec.py`**: The execution engine; runs the actual SQL queries against the database and formats results.
-- **`app/services/viz_engine.py`**: The rendering engine; processes dataframes to generate static chart images (CPU-intensive).
+### 🟢 Frontend Server (Client Layer)
+*Responsible for UI rendering, state management, and user interaction.*
 
-### 3. Modeling Server (AI & High-Compute)
-*Logic often delegated to GPU instances or External APIs (Google Gemini)*
-- **`backend/app/services/llm_engine.py`**: **The Brain**. This module interacts with high-performance LLMs (Gemini Pro/Flash). It encapsulates the complex prompt engineering and schema context injection required to translate English into accurate SQL. In a scaled architecture, this would potentially run as a separate microservice on a GPU-optimized server.
+| File Path | One-Liner Logic |
+|-----------|-----------------|
+| `frontend/src/App.vue` | Main application shell managing global state, layout, and API base URL configuration. |
+| `frontend/src/components/ChatWindow.vue` | Handles the chat interface, renders message history, and displays returned chart images. |
+| `frontend/src/components/FloatingButton.vue` | A UI utility providing a floating toggle button to open/close the dashboard widget. |
+| `frontend/src/services/api.js` | The generic HTTP client wrapper (Axios) responsible for all communication with the Backend API. |
+| `frontend/src/main.js` | The entry point that initializes the Vue application and mounts it to the DOM. |
+| `frontend/vite.config.js` | Configuration for the Vite build tool, handling local server ports and proxy settings. |
 
-## Features
-- **Natural Language to SQL**: Converts English questions into complex SQL queries automatically.
-- **Dynamic Visualization**: Autonomously determines the best chart type (Bar, Line, Scatter, Heatmap) for the data.
-- **Review & Execute**: distinct two-phase process (Analyze -> Execute) allowing users to verify the SQL before running it.
-- **Interactive UI**: A clean, modern chat interface built with Vue 3.
+### 🔵 Backend Server (Orchestration Layer)
+*Responsible for API routing, database management, and execution flow.*
 
-## Tech Stack
-- **Backend**: FastAPI, Python 3.9+, SQLAlchemy, Pandas, Matplotlib, Seaborn.
-- **Frontend**: Vue 3, Vite, Axios.
-- **AI/LLM**: Google Gemini (via `google-generativeai` SDK).
-- **Database**: MySQL.
+| File Path | One-Liner Logic |
+|-----------|-----------------|
+| `backend/app/main.py` | The FastAPI application entry point; initializes the server, CORS policies, and static file mounting. |
+| `backend/app/api/v1/endpoints.py` | Defines the REST API routes (`/analyze`, `/execute`) to receive client requests and delegate tasks. |
+| `backend/app/core/db.py` | Manages the database connection pool and provides session generators for MySQL access. |
+| `backend/app/schemas/query.py` | Defines strict Pydantic data models to validate incoming API requests and structure JSON responses. |
+| `backend/app/services/query_exec.py` | Safely executes parameterized SQL queries against the database and converts results into Pandas DataFrames. |
+| `backend/app/services/viz_engine.py` | Uses Matplotlib/Seaborn to generate static chart images (PNG) from dataframes based on visualization specs. |
 
-## Setup & Installation
+### 🟣 Modeling Server (AI & Intelligence Layer)
+*Responsible for heavy cognitive tasks, natural language understanding, and decision making.*
+
+| File Path | One-Liner Logic |
+|-----------|-----------------|
+| `backend/app/services/llm_engine.py` | Interfaces with Google Gemini to translate natural language prompts into executable SQL and Visualization Specifications. |
+
+---
+
+## 4. Project File Structure
+
+```text
+Chatbot-Dashboard/
+├── backend/                  # Backend Server Code
+│   ├── app/
+│   │   ├── api/v1/
+│   │   │   └── endpoints.py  # API Routes
+│   │   ├── core/
+│   │   │   └── db.py         # DB Operations
+│   │   ├── schemas/
+│   │   │   └── query.py      # Data Models
+│   │   ├── services/
+│   │   │   ├── llm_engine.py # AI Logic (Modeling Server)
+│   │   │   ├── query_exec.py # SQL Execution
+│   │   │   └── viz_engine.py # Chart Rendering
+│   │   └── main.py           # App Entry Point
+│   ├── static/               # Generated Charts Storage
+│   └── requirements.txt
+├── frontend/                 # Frontend Server Code
+│   ├── src/
+│   │   ├── components/       # Vue Components
+│   │   ├── services/         # API Integration
+│   │   ├── App.vue           # Main Component
+│   │   └── main.js           # Entry Point
+│   └── package.json
+└── README.md
+```
+
+---
+
+## 5. Setup & Installation
 
 ### Prerequisites
-- Python 3.9+
-- Node.js & npm
-- MySQL (XAMPP recommended)
+*   **Python 3.9+**
+*   **Node.js 16+** & **npm**
+*   **MySQL Database** (via XAMPP or Docker)
 
-### 1. Database Setup
-1. Start MySQL.
-2. Create a database named `analytics_db`.
-3. Ensure `sales_data` or relevant tables exist.
-4. Update `DATABASE_URL` in `backend/app/core/db.py` if your credentials differ from `root` (no password).
+### Step 1: Database Configuration
+1.  Ensure MySQL is running.
+2.  Create a database named `analytics_db`.
+3.  Populate it with your data (e.g., a `sales` table).
+4.  Update `DATABASE_URL` in `backend/app/core/db.py` if needed.
 
-### 2. Backend
+### Step 2: Backend Setup
 ```bash
 cd backend
+# Install Python dependencies
 pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
-*Server runs at `http://localhost:8000`*
 
-### 3. Frontend
+# Create .env file with your Gemini API Key
+echo "GOOGLE_API_KEY=your_api_key_here" > .env
+
+# Start the Server
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+*The Backend will be live at `http://localhost:8000`*
+
+### Step 3: Frontend Setup
 ```bash
 cd frontend
+# Install Node dependencies
 npm install
+
+# Start the Development Server
 npm run dev
 ```
-*Client runs at `http://localhost:5173`*
+*The Frontend will be live at `http://localhost:5173`*
 
-## API Usage
+---
 
-**POST** `/api/v1/analyze`
-- **Input**: `{"prompt": "Show sales by category", "context_tables": ["sales_data"]}`
-- **Output**: JSON with `job_id`, `generated_sql`, and `viz_spec`.
+## 6. API Integration & Requests
 
-**POST** `/api/v1/execute`
-- **Input**: `{"job_id": "..."}`
-- **Output**: JSON with `chart_url` pointing to the generated image.
+The system uses a **2-Phase Execution Model** to ensure accuracy.
 
+### Phase 1: Analysis (Natural Language -> SQL)
+**Endpoint**: `POST /api/v1/analyze`
+
+*   **Logic**: The Modeling Server translates the prompt into SQL and a Visualization Spec. It returns a "preview" (first 5 rows) for user verification.
+*   **Request**:
+    ```json
+    {
+      "prompt": "Show me total revenue by product category",
+      "context_tables": ["sales_data"]
+    }
+    ```
+*   **Response**: Returns `job_id`, `generated_sql`, `viz_spec`, and `preview_rows`.
+
+### Phase 2: Execution (SQL -> Chart)
+**Endpoint**: `POST /api/v1/execute`
+
+*   **Logic**: The Backend executes the full query (cached by `job_id`), generates the chart image, and returns the URL.
+*   **Request**:
+    ```json
+    {
+      "job_id": "unique-job-uuid-123"
+    }
+    ```
+*   **Response**:
+    ```json
+    {
+      "status": "completed",
+      "chart_url": "/static/charts/chart_uuid.png",
+      "data_summary": { "total_rows": 150 }
+    }
+    ```
