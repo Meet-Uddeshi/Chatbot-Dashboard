@@ -1,0 +1,9 @@
+Which customer tier has the highest revenue?
+Show me the transaction count per category.
+Revenue trend for the last 30 days.
+Monthly sales growth.
+Is there a relationship between quantity and total amount?
+Scatter plot of transaction value vs quantity.
+Show me sales trends for Gold tier customers only.
+Top 5 categories by sales in 2024.
+Compare revenue for Electronics vs Clothing.

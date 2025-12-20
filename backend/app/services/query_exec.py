@@ -12,38 +12,34 @@ def execute_parameterized_query(
     params: Dict[str, Any], 
     limit: Optional[int] = None
 ) -> List[Dict[str, Any]]:
-    """Executes SQL using parameter binding (SQL Injection prevention)."""
-    
-    # 1. Apply LIMIT for safety/preview
+    # ... (keep existing LIMIT logic)
     final_sql = sql_query
     if limit is not None:
-        # MySQL supports LIMIT directly. Wrapping in subquery is safer for ORDER BY.
         final_sql = f"SELECT * FROM ({sql_query}) AS sub_query_alias LIMIT {limit}"
         
-    # 2. Use SQLAlchemy's text() for binding (The Security Firewall)
     stmt = text(final_sql).bindparams(**params)
-    # backend/app/services/query_exec.py (inside execute_parameterized_query function)
-
-    # ... (code before try block)
-    print(f"--- DEBUG SQL EXECUTION ---")
-    print(f"SQL: {final_sql}")
-    print(f"PARAMS: {params}")
-    print(f"---------------------------")
     
     try:
         result = db_connection.execute(stmt)
-        
-        # Convert results to a list of dictionaries for API response
         columns = result.keys()
-        rows = [dict(zip(columns, row)) for row in result.all()]
         
+        rows = []
+        for row in result.all():
+            # Create a dictionary for the row
+            row_dict = dict(zip(columns, row))
+            # FIX: Convert Decimal/Date objects to JSON-serializable types
+            for key, value in row_dict.items():
+                if hasattr(value, '__float__') and not isinstance(value, (int, float)):
+                    row_dict[key] = float(value)
+                elif hasattr(value, 'isoformat'): # Handles Dates
+                    row_dict[key] = value.isoformat()
+            rows.append(row_dict)
+            
         return rows
         
     except Exception as e:
-        raise ValueError(f"Database query failed. SQL: {final_sql}, Error: {e}")
-
-# --- 2. DATAFRAME FETCH (for Visualization) ---
-
+        print(f"SQL Error Detail: {e}") # This helps you see the error in your terminal
+        raise ValueError(f"Database query failed. Error: {e}")
 def fetch_dataframe(db_connection: Connection, sql_query: str, params: Dict[str, Any]) -> pd.DataFrame:
     """Fetches full results into a Pandas DataFrame."""
     stmt = text(sql_query).bindparams(**params)
