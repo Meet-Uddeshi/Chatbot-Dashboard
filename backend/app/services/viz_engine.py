@@ -88,7 +88,34 @@ def render_viz(viz_spec: Dict, df: pd.DataFrame, output_dir: str = CHART_OUTPUT_
         
         elif chart_type == 'scatter':
             sns.scatterplot(data=df, x=x_col, y=y_col, ax=ax, s=100)
-        
+        elif chart_type == 'pie':
+            # Matplotlib Pie Chart Implementation
+            # y_col = Numerical Values (Size of slice)
+            # x_col = Labels (Category name)
+            
+            # Use a Seaborn palette to keep colors consistent with other charts
+            colors = sns.color_palette('pastel')[0:len(df)]
+            
+            wedges, texts, autotexts = ax.pie(
+                df[y_col], 
+                labels=df[x_col], 
+                autopct='%1.1f%%',  # Show percentage with 1 decimal
+                startangle=90,      # Start vertical for better aesthetics
+                colors=colors,
+                wedgeprops={'edgecolor': 'white'} # Clean separator lines
+            )
+            
+            # Formatting text size for clarity
+            plt.setp(texts, size=10, weight="bold")
+            plt.setp(autotexts, size=9, color="white", weight="bold")
+            
+            # Ensure the pie is drawn as a circle, not an oval
+            ax.axis('equal') 
+            
+            # Pie charts typically don't need XY axis labels, so we clear them
+            ax.set_xlabel('')
+            ax.set_ylabel('')
+
         elif chart_type == 'heatmap':
             numeric_df = df.select_dtypes(include=['float64', 'int64'])
             sns.heatmap(numeric_df.corr(), annot=True, ax=ax, cmap='coolwarm', fmt=".2f")
@@ -99,8 +126,9 @@ def render_viz(viz_spec: Dict, df: pd.DataFrame, output_dir: str = CHART_OUTPUT_
 
         # Formatting
         ax.set_title(title, fontsize=14, fontweight='bold')
-        ax.set_xlabel(x_col.replace('_', ' ').title())
-        ax.set_ylabel(y_col.replace('_', ' ').title())
+        if chart_type != 'pie':
+            ax.set_xlabel(x_col.replace('_', ' ').title())
+            ax.set_ylabel(y_col.replace('_', ' ').title())
         fig.tight_layout()
 
         # 6. Save File

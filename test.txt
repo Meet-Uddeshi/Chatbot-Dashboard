@@ -1,9 +1,9 @@
-Which customer tier has the highest revenue?
-Show me the transaction count per category.
-Revenue trend for the last 30 days.
-Monthly sales growth.
-Is there a relationship between quantity and total amount?
-Scatter plot of transaction value vs quantity.
-Show me sales trends for Gold tier customers only.
-Top 5 categories by sales in 2024.
-Compare revenue for Electronics vs Clothing.
+Show me the trend of total sales amount over time by month for 2023. 
+Compare the daily sales performance of Electronics vs Furniture for the last 3 months. 
+What is the total revenue for each product category? 
+Top 5 selling products by total units sold. 
+Show me the market share distribution of sales by category
+Which products contribute most to the revenue in the 'Electronics' category? 
+Is there a relationship between unit price and units sold for all transactions? 
+Average sales amount per transaction for each month. 
+Show total sales and total units sold for each category side by side.
