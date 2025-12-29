@@ -79,66 +79,71 @@ Chatbot-Dashboard/
 
 ```mermaid
 graph TD
-    %% Styling
-    classDef frontend fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
-    classDef backend fill:#fff3e0,stroke:#e65100,stroke-width:2px;
-    classDef external fill:#f3e5f5,stroke:#4a148c,stroke-width:2px;
-    classDef storage fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px;
+    %% Styling - Enforcing Black Text
+    classDef frontend fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000000;
+    classDef backend fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000000;
+    classDef external fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000000;
+    classDef storage fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000000;
+    classDef default color:#000000;
+    
+    %% Force Edge Labels to be Black
+    linkStyle default color:#000000;
 
     User([👤 User])
 
     subgraph "Frontend (Vue.js)"
-        UI[Chat Interface\nChatWindow.vue]:::frontend
-        API_Client[API Service\napi.js]:::frontend
+        UI[Chat Interface<br>ChatWindow.vue]:::frontend
+        API_Client[API Service<br>api.js]:::frontend
     end
 
     subgraph "Backend (FastAPI)"
-        Router[API Router\nendpoints.py]:::backend
-        Cache[(Job Cache\nIn-Memory Dictionary)]:::backend
+        Router[API Router<br>endpoints.py]:::backend
+        Cache[(Job Cache<br>In-Memory Dict)]:::backend
         
         subgraph "Services"
-            LLM_Service[LLM Engine\nPrompt Engineering]:::backend
-            SQL_Exec[SQL Executor\nquery_exec.py]:::backend
-            Viz_Engine[Visualization Engine\nviz_engine.py]:::backend
+            LLM_Service[LLM Engine<br>Prompt Engineering]:::backend
+            SQL_Exec[SQL Executor<br>query_exec.py]:::backend
+            Viz_Engine[Visualization Engine<br>viz_engine.py]:::backend
         end
     end
 
     subgraph "External & Persistence"
-        Gemini[jw:Google Gemini API]:::external
+        Gemini[Google Gemini API]:::external
         MySQL[(MySQL Database)]:::storage
-        FileStore[Static Charts\n/static/charts]:::storage
+        FileStore[Static Charts<br>/static/charts]:::storage
     end
 
     %% Phase 1: Analysis Flow
-    User -->|1. Type Query| UI
-    UI -->|2. POST /analyze| Router
-    Router -->|3. Get Schema| MySQL
-    Router -->|4. Send Prompt + Schema| LLM_Service
-    LLM_Service -->|5. Request Translation| Gemini
-    Gemini -->|6. Return JSON (SQL + VizSpec)| LLM_Service
+    User -->|"1. Type Query"| UI
+    UI -->|"2. POST /analyze"| Router
+    Router -->|"3. Get Schema"| MySQL
+    Router -->|"4. Send Prompt + Schema"| LLM_Service
+    LLM_Service -->|"5. Request Translation"| Gemini
+    Gemini -->|"6. Return JSON (SQL + VizSpec)"| LLM_Service
     LLM_Service --> Router
-    Router -->|7. Execute Preview (Limit 5)| SQL_Exec
-    SQL_Exec -->|8. Fetch Rows| MySQL
-    Router -->|9. Store Context| Cache
-    Router -->|10. Return Preview| UI
+    Router -->|"7. Execute Preview (Limit 5)"| SQL_Exec
+    SQL_Exec -->|"8. Fetch Rows"| MySQL
+    Router -->|"9. Store Context"| Cache
+    Router -->|"10. Return Preview"| UI
 
     %% Phase 2: Execution Flow
-    User -->|11. Click 'Execute'| UI
-    UI -->|12. POST /execute (Job ID)| Router
-    Router -->|13. Retrieve Context| Cache
-    Router -->|14. Fetch Full Data (Pandas)| SQL_Exec
-    SQL_Exec -->|15. Query Data| MySQL
-    SQL_Exec -->|16. Return DataFrame| Viz_Engine
-    Viz_Engine -->|17. Render Chart| Viz_Engine
-    Viz_Engine -->|18. Save PNG| FileStore
-    Viz_Engine -->|19. Return URL| Router
-    Router -->|20. Display Chart| UI
+    User -->|"11. Click 'Execute'"| UI
+    UI -->|"12. POST /execute (Job ID)"| Router
+    Router -->|"13. Retrieve Context"| Cache
+    Router -->|"14. Fetch Full Data (Pandas)"| SQL_Exec
+    SQL_Exec -->|"15. Query Data"| MySQL
+    SQL_Exec -->|"16. Return DataFrame"| Viz_Engine
+    Viz_Engine -->|"17. Render Chart"| Viz_Engine
+    Viz_Engine -->|"18. Save PNG"| FileStore
+    Viz_Engine -->|"19. Return URL"| Router
+    Router -->|"20. Display Chart"| UI
 ```
 
 ---
 
 ### Sequence Diagram
 ```mermaid
+  %%{init: {'theme': 'base', 'themeVariables': { 'textColor': '#000000', 'actorTextColor': '#000000', 'signalTextColor': '#000000', 'noteTextColor': '#000000', 'loopTextColor': '#000000', 'labelTextColor': '#000000'}}}%%
 sequenceDiagram
     autonumber
     actor User
@@ -162,7 +167,7 @@ sequenceDiagram
         activate LLM
         LLM->>LLM: Construct System Prompt
         LLM->>LLM: Call Google Gemini API
-        LLM-->>API: JSON {sql, params, viz_spec}
+        LLM-->>API: "JSON {sql, params, viz_spec}"
         deactivate LLM
 
         API->>DB: execute_parameterized_query(sql, limit=5)
