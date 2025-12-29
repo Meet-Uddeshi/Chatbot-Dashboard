@@ -143,24 +143,16 @@ graph TD
 
 ### Sequence Diagram
 ```mermaid
- %%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryTextColor': '#000000',
-    'secondaryTextColor': '#000000',
-    'tertiaryTextColor': '#000000',
-    'edgeLabelBackground': '#ffffff',
-    'lineColor': '#000000'
-  }
-}}%%
 graph TD
-    %% Styling
-    classDef frontend fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000000;
-    classDef backend fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000000;
-    classDef external fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000000;
-    classDef storage fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000000;
+    %% Define Styles with black text explicitly
+    classDef default fill:#fff,stroke:#333,stroke-width:1px,color:black;
+    classDef frontend fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:black;
+    classDef backend fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:black;
+    classDef external fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:black;
+    classDef storage fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:black;
 
-    User([👤 User])
+    %% Nodes
+    User([User])
 
     subgraph "Frontend (Vue.js)"
         UI[Chat Interface<br>ChatWindow.vue]:::frontend
@@ -198,7 +190,7 @@ graph TD
     Router -->|"10. Return Preview"| UI
 
     %% Phase 2: Execution Flow
-    User -->|"11. Click 'Execute'"| UI
+    User -->|"11. Click Execute"| UI
     UI -->|"12. POST /execute (Job ID)"| Router
     Router -->|"13. Retrieve Context"| Cache
     Router -->|"14. Fetch Full Data (Pandas)"| SQL_Exec
@@ -208,7 +200,6 @@ graph TD
     Viz_Engine -->|"18. Save PNG"| FileStore
     Viz_Engine -->|"19. Return URL"| Router
     Router -->|"20. Display Chart"| UI
-    end
 ```
 
 --- 
