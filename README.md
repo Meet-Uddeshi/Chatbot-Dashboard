@@ -144,39 +144,35 @@ graph TD
 ### Sequence Diagram
 ```mermaid
 graph TD
-    %% Define Styles with black text explicitly
-    classDef default fill:#fff,stroke:#333,stroke-width:1px,color:black;
-    classDef frontend fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:black;
-    classDef backend fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:black;
-    classDef external fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:black;
-    classDef storage fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:black;
+    %% Define a standard class for black text
+    classDef standard fill:#ffffff,stroke:#333333,stroke-width:2px,color:#000000;
 
-    %% Nodes
-    User([User])
+    %% Nodes with the standard class applied
+    User([User]):::standard
 
     subgraph "Frontend (Vue.js)"
-        UI[Chat Interface<br>ChatWindow.vue]:::frontend
-        API_Client[API Service<br>api.js]:::frontend
+        UI[Chat Interface<br>ChatWindow.vue]:::standard
+        API_Client[API Service<br>api.js]:::standard
     end
 
     subgraph "Backend (FastAPI)"
-        Router[API Router<br>endpoints.py]:::backend
-        Cache[(Job Cache<br>In-Memory Dict)]:::backend
+        Router[API Router<br>endpoints.py]:::standard
+        Cache[(Job Cache<br>In-Memory Dict)]:::standard
         
         subgraph "Services"
-            LLM_Service[LLM Engine<br>Prompt Engineering]:::backend
-            SQL_Exec[SQL Executor<br>query_exec.py]:::backend
-            Viz_Engine[Visualization Engine<br>viz_engine.py]:::backend
+            LLM_Service[LLM Engine<br>Prompt Engineering]:::standard
+            SQL_Exec[SQL Executor<br>query_exec.py]:::standard
+            Viz_Engine[Visualization Engine<br>viz_engine.py]:::standard
         end
     end
 
     subgraph "External & Persistence"
-        Gemini[Google Gemini API]:::external
-        MySQL[(MySQL Database)]:::storage
-        FileStore[Static Charts<br>/static/charts]:::storage
+        Gemini[Google Gemini API]:::standard
+        MySQL[(MySQL Database)]:::standard
+        FileStore[Static Charts<br>/static/charts]:::standard
     end
 
-    %% Phase 1: Analysis Flow
+    %% Edge Connections
     User -->|"1. Type Query"| UI
     UI -->|"2. POST /analyze"| Router
     Router -->|"3. Get Schema"| MySQL
@@ -189,7 +185,7 @@ graph TD
     Router -->|"9. Store Context"| Cache
     Router -->|"10. Return Preview"| UI
 
-    %% Phase 2: Execution Flow
+    %% Phase 2 Execution
     User -->|"11. Click Execute"| UI
     UI -->|"12. POST /execute (Job ID)"| Router
     Router -->|"13. Retrieve Context"| Cache
