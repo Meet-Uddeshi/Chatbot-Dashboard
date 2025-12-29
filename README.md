@@ -79,71 +79,6 @@ Chatbot-Dashboard/
 
 ```mermaid
 graph TD
-    %% Styling - Enforcing Black Text
-    classDef frontend fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000000;
-    classDef backend fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000000;
-    classDef external fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000000;
-    classDef storage fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000000;
-    classDef default color:#000000;
-    
-    %% Force Edge Labels to be Black
-    linkStyle default color:#000000;
-
-    User([👤 User])
-
-    subgraph "Frontend (Vue.js)"
-        UI[Chat Interface<br>ChatWindow.vue]:::frontend
-        API_Client[API Service<br>api.js]:::frontend
-    end
-
-    subgraph "Backend (FastAPI)"
-        Router[API Router<br>endpoints.py]:::backend
-        Cache[(Job Cache<br>In-Memory Dict)]:::backend
-        
-        subgraph "Services"
-            LLM_Service[LLM Engine<br>Prompt Engineering]:::backend
-            SQL_Exec[SQL Executor<br>query_exec.py]:::backend
-            Viz_Engine[Visualization Engine<br>viz_engine.py]:::backend
-        end
-    end
-
-    subgraph "External & Persistence"
-        Gemini[Google Gemini API]:::external
-        MySQL[(MySQL Database)]:::storage
-        FileStore[Static Charts<br>/static/charts]:::storage
-    end
-
-    %% Phase 1: Analysis Flow
-    User -->|"1. Type Query"| UI
-    UI -->|"2. POST /analyze"| Router
-    Router -->|"3. Get Schema"| MySQL
-    Router -->|"4. Send Prompt + Schema"| LLM_Service
-    LLM_Service -->|"5. Request Translation"| Gemini
-    Gemini -->|"6. Return JSON (SQL + VizSpec)"| LLM_Service
-    LLM_Service --> Router
-    Router -->|"7. Execute Preview (Limit 5)"| SQL_Exec
-    SQL_Exec -->|"8. Fetch Rows"| MySQL
-    Router -->|"9. Store Context"| Cache
-    Router -->|"10. Return Preview"| UI
-
-    %% Phase 2: Execution Flow
-    User -->|"11. Click 'Execute'"| UI
-    UI -->|"12. POST /execute (Job ID)"| Router
-    Router -->|"13. Retrieve Context"| Cache
-    Router -->|"14. Fetch Full Data (Pandas)"| SQL_Exec
-    SQL_Exec -->|"15. Query Data"| MySQL
-    SQL_Exec -->|"16. Return DataFrame"| Viz_Engine
-    Viz_Engine -->|"17. Render Chart"| Viz_Engine
-    Viz_Engine -->|"18. Save PNG"| FileStore
-    Viz_Engine -->|"19. Return URL"| Router
-    Router -->|"20. Display Chart"| UI
-```
-
----
-
-### Sequence Diagram
-```mermaid
-graph TD
     %% Define a standard class for black text
     classDef standard fill:#ffffff,stroke:#333333,stroke-width:2px,color:#000000;
 
@@ -196,6 +131,80 @@ graph TD
     Viz_Engine -->|"18. Save PNG"| FileStore
     Viz_Engine -->|"19. Return URL"| Router
     Router -->|"20. Display Chart"| UI
+```
+
+---
+
+### Sequence Diagram
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'textColor': '#000000', 'actorTextColor': '#000000', 'signalTextColor': '#000000', 'noteTextColor': '#000000', 'loopTextColor': '#000000', 'labelTextColor': '#000000'}}}%%
+sequenceDiagram
+    autonumber
+    actor User
+    participant FE as Frontend (Vue.js)
+    participant API as Backend API (FastAPI)
+    participant LLM as LLM Engine (Gemini)
+    participant DB as MySQL Database
+    participant VIZ as Viz Engine (Matplotlib)
+
+    %% PHASE 1: ANALYSIS
+    rect rgb(230, 245, 255)
+        Note over User, DB: Phase 1: Analysis & Preview
+        User->>FE: Enters "Show me total sales by category"
+        FE->>API: POST /api/v1/analyze {prompt, tables}
+        
+        activate API
+        API->>DB: get_database_schema(tables)
+        DB-->>API: Schema String (Columns & Types)
+        
+        API->>LLM: translate_nl_to_sql(prompt, schema)
+        activate LLM
+        LLM->>LLM: Construct System Prompt
+        LLM->>LLM: Call Google Gemini API
+        LLM-->>API: "JSON {sql, params, viz_spec}"
+        deactivate LLM
+
+        API->>DB: execute_parameterized_query(sql, limit=5)
+        activate DB
+        DB-->>API: Preview Rows (List[Dict])
+        deactivate DB
+
+        API->>API: Cache Job Data {sql, viz_spec} -> JOB_CACHE[uuid]
+        
+        API-->>FE: Response {job_id, preview_rows, generated_sql}
+        deactivate API
+
+        FE->>User: Show SQL Preview & Data Snippet
+    end
+
+    %% PHASE 2: EXECUTION
+    rect rgb(255, 248, 230)
+        Note over User, VIZ: Phase 2: Execution & Visualization
+        User->>FE: Clicks "✅ Execute Full Chart"
+        FE->>API: POST /api/v1/execute {job_id}
+        
+        activate API
+        API->>API: Lookup job_id in JOB_CACHE
+        
+        API->>DB: fetch_dataframe(full_sql)
+        activate DB
+        DB-->>API: Full Result Set (Pandas DataFrame)
+        deactivate DB
+
+        API->>VIZ: render_viz(viz_spec, dataframe)
+        activate VIZ
+        VIZ->>VIZ: Clean Data (Auto-correct Types)
+        VIZ->>VIZ: Plot Chart (Seaborn/Matplotlib)
+        VIZ->>VIZ: Save to /static/charts/uuid.png
+        VIZ-->>API: Return chart_url
+        deactivate VIZ
+
+        API-->>FE: Response {status: "completed", chart_url}
+        deactivate API
+
+        FE->>FE: <img src="chart_url" />
+        FE-->>User: Display Final Chart
+    end
 ```
 
 --- 
